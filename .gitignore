@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+backend/.venv/
+
+# Node/Next
+node_modules/
+frontend/.next/
+
+# Editor / OS
+.DS_Store
+*.log
+
+# Runtime artifacts
+backend/storage/
+backend/backend_server.log
+backend/backend_server.pid
+.env
