@@ -34,7 +34,6 @@ class Settings(BaseSettings):
     embedding_model: str = Field(default="text-embedding-3-small", alias="EMBEDDING_MODEL")
     chat_model: str = Field(default="gpt-4o-mini", description="Default OpenAI chat model.", alias="CHAT_MODEL")
     gemini_chat_model: str = Field(
-        default="models/gemini-flash-latest",
         description="Default Gemini chat model.",
         alias="GEMINI_CHAT_MODEL",
     )

@@ -5,9 +5,9 @@ NixAI's backend is an async FastAPI service that ingests reference documents, st
 ## Project layout
 
 - `app/main.py` – FastAPI application factory.
-- `app/api` – routers for `/api/upload`, `/api/docs`, `/api/ask`, `/api/health`.
-- `app/services` – ingestion pipeline (file storage, text extraction, embeddings, vector store, LLM wrapper).
-- `app/models` – SQLAlchemy ORM models (`Document`, `DocumentChunk`).
+- `app/api` – routers for `/api/auth`, `/api/upload`, `/api/docs`, `/api/ask`, `/api/health`.
+- `app/services` – ingestion pipeline (file storage, text extraction, embeddings, vector store, LLM wrapper, auth helpers).
+- `app/models` – SQLAlchemy ORM models (`User`, `Document`, `DocumentChunk`).
 - `app/schemas` – Pydantic response/request models.
 - `app/db` – SQLAlchemy session helpers.
 
@@ -36,12 +36,14 @@ The API will be available at http://127.0.0.1:8000 with interactive docs at `/do
 
 ### Core endpoints
 
-| Method | Path           | Description                                                                                                                                                  |
-| ------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET`  | `/api/health/` | Simple readiness probe.                                                                                                                                      |
-| `POST` | `/api/upload`  | Accepts multiple `.txt`/`.pdf` files, extracts text, chunks, embeds via LangChain, and indexes into Chroma. Returns document metadata.                       |
-| `GET`  | `/api/docs`    | Lists documents for the current (demo) user with chunk + embedding counts.                                                                                   |
-| `POST` | `/api/ask`     | `{ "question": "..." }` → retrieves top chunks from Chroma, calls LLM (OpenAI if available, deterministic fallback otherwise), returns `answer` + `sources`. |
+| Method | Path             | Description                                                                                                                                                  |
+| ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`  | `/api/health/`   | Simple readiness probe.                                                                                                                                      |
+| `POST` | `/api/auth/signup` | Register with email + password.                                                                                                                            |
+| `POST` | `/api/auth/login`  | Log in with email + password, receive JWT access token.                                                                                                    |
+| `POST` | `/api/upload`    | Auth required. Accepts multiple `.txt`/`.pdf` files, extracts text, chunks, embeds via LangChain, and indexes into Chroma. Returns document metadata.       |
+| `GET`  | `/api/docs`      | Auth required. Lists documents for the current user with chunk + embedding counts.                                                                           |
+| `POST` | `/api/ask`       | Auth required. `{ "question": "..." }` → retrieves top chunks from Chroma for the current user, calls LLM (OpenAI or Gemini if configured), returns answer + sources. |
 
 ## Testing
 
