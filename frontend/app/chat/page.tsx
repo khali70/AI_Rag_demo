@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
 
@@ -29,12 +29,35 @@ export default function ChatPage() {
     []
   );
 
-  const [sessions, setSessions] = useState<ChatSession[]>([defaultSession]);
-  const [activeSessionId, setActiveSessionId] = useState(defaultSession.id);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState("");
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
+  const activeSession =
+    sessions.find((session) => session.id === activeSessionId) ??
+    sessions[0] ??
+    defaultSession;
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("nixai_chat_sessions") : null;
+    if (stored) {
+      const parsed: ChatSession[] = JSON.parse(stored);
+      if (parsed.length) {
+        setSessions(parsed);
+        setActiveSessionId(parsed[0].id);
+        return;
+      }
+    }
+    setSessions([defaultSession]);
+    setActiveSessionId(defaultSession.id);
+  }, [defaultSession]);
+
+  useEffect(() => {
+    if (sessions.length === 0) return;
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("nixai_chat_sessions", JSON.stringify(sessions));
+  }, [sessions]);
 
   const askMutation = useMutation({
     mutationFn: (question: string) => askQuestion(question),
@@ -186,8 +209,8 @@ export default function ChatPage() {
           <div className="flex gap-3">
             <input
               type="text"
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
+              value={askMutation.isPending?"":prompt}
+              onChange={(event) => event.target.value!="" && setPrompt(event.target.value)}
               placeholder="Ask anything..."
               className="flex-1 rounded-full border border-slate-800 bg-slate-900 px-4 py-2 text-sm focus:border-cyan-500 focus:outline-none"
             />
