@@ -100,3 +100,47 @@ class LLMService:
             {context}
             """
         ).strip()
+
+    def generate_title(self, context: str) -> str:
+        prompt = dedent(
+            f"""
+            You are an assistant that summarizes conversations. Provide a concise title (max 6 words) that describes the following context:
+
+            {context}
+            """
+        ).strip()
+
+        if self.openai_client:
+            response = self.openai_client.chat.completions.create(
+                model=self.openai_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You create short descriptive titles for chat sessions.",
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+                temperature=0.2,
+                max_tokens=32,
+            )
+            return response.choices[0].message.content.strip() or "Chat session"
+
+        if self.gemini_model:
+            response = self.gemini_model.generate_content(prompt)
+            text = getattr(response, "text", None)
+            if not text:
+                for candidate in getattr(response, "candidates", []) or []:
+                    content = getattr(candidate, "content", None)
+                    for part in getattr(content, "parts", []) if content else []:
+                        part_text = getattr(part, "text", None)
+                        if part_text:
+                            text = part_text
+                            break
+                    if text:
+                        break
+            return text or "Chat session"
+
+        return "Chat session"

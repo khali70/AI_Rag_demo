@@ -31,6 +31,10 @@ export type TokenResponse = {
   token_type: string;
 };
 
+export type TitleResponse = {
+  title: string;
+};
+
 const DEFAULT_PUBLIC_BASE_URL = "http://localhost:8000/api";
 const DEFAULT_INTERNAL_BASE_URL = "http://backend:8000/api";
 
@@ -81,6 +85,19 @@ export async function askQuestion(question: string): Promise<AskResponse> {
     body: JSON.stringify({ question }),
   });
   return handleResponse<AskResponse>(res);
+}
+
+export async function generateSessionTitle(context: string): Promise<string> {
+  const res = await fetch(`${getApiBase()}/ask/title`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(),
+    },
+    body: JSON.stringify({ context }),
+  });
+  const data = await handleResponse<TitleResponse>(res);
+  return data.title;
 }
 
 function buildAuthHeaders(): HeadersInit {

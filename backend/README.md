@@ -44,6 +44,7 @@ The API will be available at http://127.0.0.1:8000 with interactive docs at `/do
 | `POST` | `/api/upload`    | Auth required. Accepts multiple `.txt`/`.pdf` files, extracts text, chunks, embeds via LangChain, and indexes into Chroma. Returns document metadata.       |
 | `GET`  | `/api/docs`      | Auth required. Lists documents for the current user with chunk + embedding counts.                                                                           |
 | `POST` | `/api/ask`       | Auth required. `{ "question": "..." }` → retrieves top chunks from Chroma for the current user, calls LLM (OpenAI or Gemini if configured), returns answer + sources. |
+| `POST` | `/api/ask/title` | Generate a short descriptive title for a chat session given the conversation context.                                                                        |
 
 ## Testing
 

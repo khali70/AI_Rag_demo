@@ -1,4 +1,5 @@
 from .auth import Token, UserCreate, UserLogin, UserRead
+from .title import TitleRequest, TitleResponse
 from .chat import AskRequest, AskResponse, SourceInfo
 from .documents import DocumentListResponse, DocumentSummary, UploadResponse
 
@@ -7,6 +8,8 @@ __all__ = [
     "UserLogin",
     "UserRead",
     "Token",
+    "TitleRequest",
+    "TitleResponse",
     "AskRequest",
     "AskResponse",
     "SourceInfo",
