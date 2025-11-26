@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="change-me", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(default=30, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    refresh_token_expire_minutes: int = Field(default=43200, alias="REFRESH_TOKEN_EXPIRE_MINUTES")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

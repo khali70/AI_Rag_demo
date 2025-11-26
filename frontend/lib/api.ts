@@ -28,6 +28,9 @@ export type AskResponse = {
 
 export type TokenResponse = {
   access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  refresh_expires_in: number;
   token_type: string;
 };
 
@@ -40,10 +43,33 @@ const DEFAULT_INTERNAL_BASE_URL = "http://backend:8000/api";
 
 const getApiBase = () => {
   if (typeof window === "undefined") {
-    return process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_INTERNAL_BASE_URL;
+    return (
+      process.env.API_INTERNAL_BASE_URL ??
+      process.env.NEXT_PUBLIC_API_BASE_URL ??
+      DEFAULT_INTERNAL_BASE_URL
+    );
   }
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_PUBLIC_BASE_URL;
 };
+
+function buildAuthHeaders(): HeadersInit {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem("nixai_token");
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+function setTokens(accessToken: string, refreshToken: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("nixai_token", accessToken);
+  window.localStorage.setItem("nixai_refresh_token", refreshToken);
+}
+
+function clearTokens() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem("nixai_token");
+  window.localStorage.removeItem("nixai_refresh_token");
+}
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -53,10 +79,54 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function authFetch(
+  input: RequestInfo,
+  init: RequestInit = {},
+  attemptRefresh = true,
+): Promise<Response> {
+  const headers = {
+    ...(init.headers ?? {}),
+    ...buildAuthHeaders(),
+  };
+  const response = await fetch(input, { ...init, headers });
+
+  if (response.status === 401 && attemptRefresh) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return authFetch(input, init, false);
+    }
+    logout();
+    if (typeof window !== "undefined") {
+      window.location.href = "/auth/login";
+    }
+  }
+
+  return response;
+}
+
+export async function refreshAccessToken(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const refreshToken = window.localStorage.getItem("nixai_refresh_token");
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(`${getApiBase()}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await handleResponse<TokenResponse>(res);
+    setTokens(data.access_token, data.refresh_token);
+    return true;
+  } catch {
+    clearTokens();
+    return false;
+  }
+}
+
 export async function fetchDocuments(): Promise<DocumentSummary[]> {
-  const res = await fetch(`${getApiBase()}/docs`, {
+  const res = await authFetch(`${getApiBase()}/docs`, {
     cache: "no-store",
-    headers: buildAuthHeaders(),
   });
   const data = await handleResponse<{ documents: DocumentSummary[] }>(res);
   return data.documents;
@@ -66,53 +136,38 @@ export async function uploadDocuments(files: File[]): Promise<UploadResponse> {
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
 
-  const res = await fetch(`${getApiBase()}/upload`, {
+  const res = await authFetch(`${getApiBase()}/upload`, {
     method: "POST",
-    headers: buildAuthHeaders(),
     body: formData,
   });
 
   return handleResponse<UploadResponse>(res);
 }
 
+export async function deleteDocument(documentId: string): Promise<void> {
+  const res = await authFetch(`${getApiBase()}/docs/${documentId}`, {
+    method: "DELETE",
+  });
+  await handleResponse(res);
+}
+
 export async function askQuestion(question: string): Promise<AskResponse> {
-  const res = await fetch(`${getApiBase()}/ask`, {
+  const res = await authFetch(`${getApiBase()}/ask`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...buildAuthHeaders(),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
   });
   return handleResponse<AskResponse>(res);
 }
 
 export async function generateSessionTitle(context: string): Promise<string> {
-  const res = await fetch(`${getApiBase()}/ask/title`, {
+  const res = await authFetch(`${getApiBase()}/ask/title`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...buildAuthHeaders(),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ context }),
   });
   const data = await handleResponse<TitleResponse>(res);
   return data.title;
-}
-
-export async function deleteDocument(documentId: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/docs/${documentId}`, {
-    method: "DELETE",
-    headers: buildAuthHeaders(),
-  });
-  await handleResponse(res);
-}
-
-function buildAuthHeaders(): HeadersInit {
-  if (typeof window === "undefined") return {};
-  const token = window.localStorage.getItem("nixai_token");
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
 }
 
 export async function signup(email: string, password: string): Promise<void> {
@@ -131,13 +186,15 @@ export async function login(email: string, password: string): Promise<string> {
     body: JSON.stringify({ email, password }),
   });
   const data = await handleResponse<TokenResponse>(res);
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem("nixai_token", data.access_token);
-  }
+  setTokens(data.access_token, data.refresh_token);
   return data.access_token;
 }
 
 export function logout() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem("nixai_token");
+  clearTokens();
+}
+
+export function getAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem("nixai_token");
 }

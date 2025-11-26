@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from uuid import uuid4
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -11,7 +12,6 @@ from ..core.config import get_settings
 from ..models.user import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 
 
@@ -51,3 +51,58 @@ def decode_token(token: str) -> Optional[str]:
         return None
     subject: str | None = payload.get("sub")
     return subject
+
+
+def _parse_refresh_token(token: str) -> tuple[str, str] | None:
+    try:
+        token_id, secret = token.split(".", 1)
+    except ValueError:
+        return None
+    return token_id, secret
+
+
+def create_refresh_token() -> str:
+    token_id = uuid4().hex
+    secret = uuid4().hex
+    return f"{token_id}.{secret}"
+
+
+def store_refresh_token(db: Session, user: User, token: str) -> None:
+    settings = get_settings()
+    parsed = _parse_refresh_token(token)
+    if not parsed:
+        return
+    token_id, _ = parsed
+    user.refresher_id = token_id
+    user.refresh_token_hash = pwd_context.hash(token)
+    user.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.refresh_token_expire_minutes)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+
+def clear_refresh_token(db: Session, user: User) -> None:
+    user.refresher_id = None
+    user.refresh_token_hash = None
+    user.refresh_token_expires_at = None
+    db.add(user)
+    db.commit()
+
+
+def get_user_by_refresh_token(db: Session, token: str) -> Optional[User]:
+    parsed = _parse_refresh_token(token)
+    if not parsed:
+        return None
+    token_id, _ = parsed
+    user = db.query(User).filter(User.refresher_id == token_id).first()
+    if not user or not user.refresh_token_hash or not user.refresh_token_expires_at:
+        return None
+
+    if datetime.now(timezone.utc) > user.refresh_token_expires_at:
+        clear_refresh_token(db, user)
+        return None
+
+    if not pwd_context.verify(token, user.refresh_token_hash):
+        return None
+
+    return user

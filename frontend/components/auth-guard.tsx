@@ -3,6 +3,8 @@
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { logout, refreshAccessToken } from "@/lib/api";
+
 const AUTH_PREFIX = "/auth";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
@@ -11,19 +13,31 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Allow auth pages without a token.
     if (pathname.startsWith(AUTH_PREFIX)) {
       setReady(true);
       return;
     }
 
     const token = typeof window !== "undefined" ? window.localStorage.getItem("nixai_token") : null;
-    if (!token) {
-      router.replace("/auth/login");
+    if (token) {
+      setReady(true);
       return;
     }
 
-    setReady(true);
+    const refresh = typeof window !== "undefined" ? window.localStorage.getItem("nixai_refresh_token") : null;
+    if (refresh) {
+      refreshAccessToken().then((success) => {
+        if (success) {
+          setReady(true);
+          return;
+        }
+        logout();
+        router.replace("/auth/login");
+      });
+      return;
+    }
+
+    router.replace("/auth/login");
   }, [pathname, router]);
 
   if (!ready) {
@@ -36,4 +50,3 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
   return <>{children}</>;
 }
-
