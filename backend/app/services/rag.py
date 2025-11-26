@@ -116,6 +116,16 @@ class RAGService:
             .all()
         )
 
+    def delete_document(self, db: Session, document_id: str, user_id: str) -> bool:
+        document = db.get(Document, document_id)
+        if not document or document.user_id != user_id:
+            return False
+
+        self.vector_store.delete_document_embeddings(document_id)
+        db.delete(document)
+        db.commit()
+        return True
+
     async def answer_question(self, question: str, user_id: str, top_k: int = 4) -> AskResponse:
         query_embedding = await run_in_threadpool(self.embedding_service.embed_query, question)
         source_chunks = await run_in_threadpool(self.vector_store.query, user_id, query_embedding, top_k)

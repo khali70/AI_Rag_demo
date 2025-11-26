@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChangeEvent, FormEvent, useState } from "react";
 
-import { DocumentSummary, UploadResponse, fetchDocuments, uploadDocuments } from "@/lib/api";
+import { deleteDocument, DocumentSummary, UploadResponse, fetchDocuments, uploadDocuments } from "@/lib/api";
 
 export default function DocumentsPage() {
   const queryClient = useQueryClient();
@@ -13,6 +13,16 @@ export default function DocumentsPage() {
   const { data: documents = [], isLoading } = useQuery<DocumentSummary[], Error>({
     queryKey: ["documents"],
     queryFn: fetchDocuments,
+  });
+
+  const deleteMutation = useMutation<void, Error, string>({
+    mutationFn: deleteDocument,
+    onSuccess: () => {
+      setStatusMessage("Document deleted.");
+      setSelectedFiles([]);
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+    onError: (error) => setStatusMessage(error.message),
   });
 
   const uploadMutation = useMutation<UploadResponse, Error, File[]>({
@@ -82,6 +92,7 @@ export default function DocumentsPage() {
                   <th className="px-4 py-3 text-left">Chunks</th>
                   <th className="px-4 py-3 text-left">Embeddings</th>
                   <th className="px-4 py-3 text-left">Uploaded</th>
+                  <th className="px-4 py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
@@ -94,6 +105,20 @@ export default function DocumentsPage() {
                       {new Date(doc.created_at).toLocaleString(undefined, {
                         hour12: false,
                       })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Delete "${doc.filename}"? This removes embeddings and metadata.`)) {
+                            deleteMutation.mutate(doc.id);
+                          }
+                        }}
+                        className="text-xs font-semibold text-rose-400 hover:text-rose-300"
+                        disabled={deleteMutation.isPending}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

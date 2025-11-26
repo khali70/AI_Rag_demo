@@ -100,6 +100,14 @@ export async function generateSessionTitle(context: string): Promise<string> {
   return data.title;
 }
 
+export async function deleteDocument(documentId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/docs/${documentId}`, {
+    method: "DELETE",
+    headers: buildAuthHeaders(),
+  });
+  await handleResponse(res);
+}
+
 function buildAuthHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};
   const token = window.localStorage.getItem("nixai_token");

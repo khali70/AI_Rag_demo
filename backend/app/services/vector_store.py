@@ -108,3 +108,12 @@ class VectorStoreService:
                 )
             )
         return sources
+
+    def delete_document_embeddings(self, document_id: str) -> None:
+        try:
+            self._collection.delete(where={"document_id": document_id})
+            if hasattr(self._client, "persist"):
+                self._collection.persist()
+        except Exception:
+            # Swallow Chroma errors; downstream code can continue.
+            pass
