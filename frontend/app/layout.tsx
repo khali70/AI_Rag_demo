@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import "./globals.css";
+import { AuthGuard } from "@/components/auth-guard";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </nav>
               </div>
             </header>
-            <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+            <main className="mx-auto max-w-5xl px-4 py-8">
+              <AuthGuard>{children}</AuthGuard>
+            </main>
           </div>
         </Providers>
       </body>
