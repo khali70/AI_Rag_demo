@@ -3,10 +3,12 @@
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { login } from "@/lib/api";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -15,6 +17,7 @@ export default function LoginPage() {
     mutationFn: () => login(email, password),
     onSuccess: () => {
       setMessage("Logged in successfully.");
+      router.push("/documents");
     },
     onError: (error: Error) => setMessage(error.message),
   });
@@ -74,4 +77,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

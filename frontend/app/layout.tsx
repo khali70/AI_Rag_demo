@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import "./globals.css";
 import { AuthGuard } from "@/components/auth-guard";
+import { AuthMenu } from "@/components/auth-menu";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
@@ -13,7 +14,6 @@ export const metadata: Metadata = {
 const navItems = [
   { href: "/documents", label: "Documents" },
   { href: "/chat", label: "Chat" },
-  { href: "/auth/login", label: "Login" },
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -27,12 +27,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/documents" className="text-lg font-semibold text-cyan-400">
                   NixAI Dashboard
                 </Link>
-                <nav className="flex gap-4 text-sm">
+                <nav className="flex items-center gap-4 text-sm">
                   {navItems.map((item) => (
                     <Link key={item.href} href={item.href} className="text-slate-300 hover:text-white">
                       {item.label}
                     </Link>
                   ))}
+                  <AuthMenu />
                 </nav>
               </div>
             </header>

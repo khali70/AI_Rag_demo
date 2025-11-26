@@ -111,3 +111,8 @@ export async function login(email: string, password: string): Promise<string> {
   }
   return data.access_token;
 }
+
+export function logout() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem("nixai_token");
+}

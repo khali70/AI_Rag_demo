@@ -13,6 +13,8 @@ from ..models.user import User
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -49,4 +51,3 @@ def decode_token(token: str) -> Optional[str]:
         return None
     subject: str | None = payload.get("sub")
     return subject
-
