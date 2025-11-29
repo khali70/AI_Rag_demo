@@ -15,7 +15,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
-COPY .env.example ./app.env.example
+COPY .env ./app/.env
 
 RUN mkdir -p /app/storage/uploads /app/storage/chroma
 
