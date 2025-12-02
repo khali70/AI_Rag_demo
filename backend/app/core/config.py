@@ -31,15 +31,36 @@ class Settings(BaseSettings):
 
     text_splitter_chunk_size: int = Field(default=800, alias="TEXT_SPLITTER_CHUNK_SIZE")
     text_splitter_chunk_overlap: int = Field(default=200, alias="TEXT_SPLITTER_CHUNK_OVERLAP")
+    embedding_provider: str = Field(
+        default="auto",
+        description="Preferred embedding provider: auto|openai|gemini|local.",
+        alias="EMBEDDING_PROVIDER",
+    )
     embedding_model: str = Field(default="text-embedding-3-small", alias="EMBEDDING_MODEL")
+    gemini_embedding_model: str = Field(
+        default="models/embedding-001",
+        description="Gemini embedding model identifier.",
+        alias="GEMINI_EMBEDDING_MODEL",
+    )
+    llm_provider: str = Field(
+        default="auto",
+        description="Preferred LLM provider: auto|openai|gemini|anthropic.",
+        alias="LLM_PROVIDER",
+    )
     chat_model: str = Field(default="gpt-4o-mini", description="Default OpenAI chat model.", alias="CHAT_MODEL")
     gemini_chat_model: str = Field(
         description="Default Gemini chat model.",
         alias="GEMINI_CHAT_MODEL",
     )
+    anthropic_chat_model: str = Field(
+        default="claude-3-5-sonnet-20240620",
+        description="Default Anthropic chat model.",
+        alias="ANTHROPIC_CHAT_MODEL",
+    )
 
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     gemini_api_key: Optional[str] = Field(default=None, alias="GEMINI_API_KEY")
+    anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
 
     jwt_secret_key: str = Field(default="change-me", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")

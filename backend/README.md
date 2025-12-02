@@ -61,9 +61,11 @@ All configuration is handled via environment variables (`.env`). Important ones:
 
 - `DATABASE_URL`: defaults to SQLite for simplicity.
 - `OPENAI_API_KEY`: if set, embeddings + answers use OpenAI; otherwise deterministic offline implementations are used.
+- `LLM_PROVIDER`: `auto` chooses the first configured provider; set to `openai`, `gemini`, or `anthropic` to pin a provider.
+- `EMBEDDING_PROVIDER`: `auto` chooses the first configured provider; set to `openai`, `gemini`, or `local` to pin a provider.
 - `BACKEND_CORS_ORIGINS`: JSON array, comma-separated list, or `"*"` to allow all origins (default is `"*"`).
-- `CHAT_MODEL` / `GEMINI_CHAT_MODEL`: choose valid model identifiers for the LLM provider you enable (`OPENAI_API_KEY` or `GEMINI_API_KEY`).
-- `GEMINI_EMBEDDING_MODEL`: choose the Gemini embedding model you want to use when `GEMINI_API_KEY` is provided (defaults to `models/embedding-001`).
+- `CHAT_MODEL` / `GEMINI_CHAT_MODEL` / `ANTHROPIC_CHAT_MODEL`: choose valid model identifiers for the LLM provider you enable.
+- `EMBEDDING_MODEL` / `GEMINI_EMBEDDING_MODEL`: choose the embedding model identifiers for the provider you enable (OpenAI or Gemini).
 - `CHROMA_PERSIST_DIR`, `UPLOADS_DIR`: directories for vector store + original files (created automatically).
 - `CHROMA_SERVER_HOST`, `CHROMA_SERVER_PORT`: set these if you prefer using a networked Chroma service (e.g., via Docker) instead of the embedded persistent client.
 

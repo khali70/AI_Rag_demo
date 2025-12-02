@@ -14,7 +14,7 @@ from ..models.document import Document, DocumentChunk
 from ..schemas import AskResponse, DocumentSummary, SourceInfo, UploadResponse
 from .embedding import EmbeddingService
 from .file_storage import FileStorageService
-from .llm import LLMService
+from .llm import LLMService, build_llm_service
 from .text_processing import TextExtractionError, TextExtractionService
 from .vector_store import VectorStoreService
 
@@ -161,5 +161,5 @@ def build_rag_service() -> RAGService:
         text_extractor=TextExtractionService(),
         embedding_service=EmbeddingService(settings),
         vector_store=VectorStoreService(settings),
-        llm_service=LLMService(settings),
+        llm_service=build_llm_service(settings),
     )

@@ -3,14 +3,14 @@ from fastapi.concurrency import run_in_threadpool
 
 from ...core.config import get_settings
 from ...schemas import AskRequest, AskResponse, TitleRequest, TitleResponse
-from ...services.llm import LLMService
+from ...services.llm import build_llm_service
 from ...services.rag import build_rag_service
 from .auth import get_current_user_id
 
 router = APIRouter()
 
 rag_service = build_rag_service()
-llm_service = LLMService(get_settings())
+llm_service = build_llm_service(get_settings())
 
 
 @router.post("/", response_model=AskResponse, summary="Ask a question against uploaded docs.")
