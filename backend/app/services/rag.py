@@ -7,6 +7,7 @@ from typing import Sequence
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 from sqlalchemy.orm import Session
 
 from ..core.config import Settings, get_settings
@@ -17,6 +18,7 @@ from .file_storage import FileStorageService
 from .llm import LLMService, build_llm_service
 from .text_processing import TextExtractionError, TextExtractionService
 from .vector_store import VectorStoreService
+from collections import defaultdict
 
 
 class RAGService:
@@ -130,8 +132,15 @@ class RAGService:
         query_embedding = await run_in_threadpool(self.embedding_service.embed_query, question)
         source_chunks = await run_in_threadpool(self.vector_store.query, user_id, query_embedding, top_k)
 
+        # Group chunks by document name
+        chunks_by_doc = defaultdict(list)
+        for chunk in source_chunks:
+            chunks_by_doc[chunk.document_name].append(chunk.content)
+        
+        # Construct context with document names and their chunks
         context = "\n\n".join(
-            f"[{chunk.document_name}#{chunk.chunk_index}] {chunk.content}" for chunk in source_chunks
+            f"{doc_name}\n" + "\n".join(chunks)
+            for doc_name, chunks in chunks_by_doc.items()
         )
 
         answer = await run_in_threadpool(self.llm_service.generate_answer, question, context)

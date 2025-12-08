@@ -71,7 +71,7 @@ def build_embeddings(settings: Settings) -> EmbeddingProvider:
                 )
             )
         if provider == "openai":
-            return LocalHashEmbeddingProvider()
+            return LocalHashEmbeddingProvider(dimension=_infer_embedding_dimension(settings, provider))
 
     if provider in ("auto", "gemini"):
         if settings.gemini_api_key and GoogleGenerativeAIEmbeddings is not None:
@@ -82,9 +82,42 @@ def build_embeddings(settings: Settings) -> EmbeddingProvider:
                 )
             )
         if provider == "gemini":
-            return LocalHashEmbeddingProvider()
+            return LocalHashEmbeddingProvider(dimension=_infer_embedding_dimension(settings, provider))
 
-    return LocalHashEmbeddingProvider()
+    return LocalHashEmbeddingProvider(dimension=_infer_embedding_dimension(settings, provider))
+
+
+def _infer_embedding_dimension(settings: Settings, provider: str) -> int:
+    """Best-effort guess of the configured embedding dimension to keep Chroma collections aligned."""
+    model_dimensions = {
+        "text-embedding-3-small": 1536,
+        "text-embedding-3-large": 3072,
+        "text-embedding-ada-002": 1536,
+        "models/embedding-001": 768,  # Gemini embedding model default dimension
+    }
+
+    def dim_for_model(name: str | None, default: int) -> int:
+        key = (name or "").lower()
+        return model_dimensions.get(key, default)
+
+    provider = (provider or "").lower()
+
+    if provider == "openai":
+        return dim_for_model(settings.embedding_model, default=1536)
+
+    if provider == "gemini":
+        return dim_for_model(settings.gemini_embedding_model, default=768)
+
+    if provider == "auto":
+        if settings.openai_api_key and OpenAIEmbeddings is not None:
+            return dim_for_model(settings.embedding_model, default=1536)
+        if settings.gemini_api_key and GoogleGenerativeAIEmbeddings is not None:
+            return dim_for_model(settings.gemini_embedding_model, default=768)
+        # No remote provider available; pick the smaller default to match common Gemini runs.
+        return dim_for_model(settings.gemini_embedding_model, default=768)
+
+    # Fallback when provider is unrecognized.
+    return dim_for_model(settings.embedding_model, default=768)
 
 
 class EmbeddingService:

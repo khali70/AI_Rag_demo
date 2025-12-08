@@ -36,23 +36,31 @@ class LLMService:
 
         self.answer_prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", "You are a helpful assistant that strictly answers using the provided context."),
+                (
+                    "system",
+                    "Be concise and clear unless the user asks for more detail."
+                    "You are assistant. Use the provided info as your main source. "
+                ),
                 (
                     "human",
                     dedent(
                         """
-                        Use the context to answer the user's question. If the answer is absent, say you do not know.
+                        Using the info below, answer the user's question.
 
-                        Context:
+                        - Rely on this info first; only use general knowledge if something is missing.
+                        - don't mention 'context' or 'files' unless necessary.
+                        - If you add anything beyond the files, briefly note that this part is not covered in them.
+
+                        Info:
                         {context}
 
-                        Question: {question}
+                        Question:
+                        {question}
                         """
                     ).strip(),
                 ),
             ]
         )
-
         self.title_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", "You create short descriptive titles for chat sessions."),
@@ -70,9 +78,6 @@ class LLMService:
         )
 
     def generate_answer(self, question: str, context: str) -> str:
-        if not context.strip():
-            return "I could not find any relevant documents for this question."
-
         if not self.llm:
             return dedent(
                 f"""

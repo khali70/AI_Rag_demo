@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from langchain_community.document_loaders import PyPDFLoader
+import tiktoken 
 from pypdf import PdfReader
 
 
@@ -22,12 +24,22 @@ class TextExtractionService:
         if suffix == ".txt":
             return file_path.read_text(encoding="utf-8", errors="ignore")
         if suffix == ".pdf":
-            return self._extract_pdf(file_path)
+            res = self._extract_pdf(file_path)
+            print(len(tiktoken.get_encoding("cl100k_base").encode(res)))
+            return res
 
         raise TextExtractionError(f"Unsupported file type: {suffix}")
 
     @staticmethod
     def _extract_pdf(file_path: Path) -> str:
+        # Prefer LangChain's PDF loader for more resilient extraction (handles layout quirks, encodings, etc.).
+        try:
+            docs = PyPDFLoader(str(file_path)).load()
+            if docs:
+                return "\n\n".join(doc.page_content.strip() for doc in docs if doc.page_content)
+        except Exception as exc:
+            print(f"LangChain PDF extraction failed for {file_path}: {exc}")
+
         reader = PdfReader(str(file_path))
         pages_text: list[str] = []
         for page in reader.pages:
