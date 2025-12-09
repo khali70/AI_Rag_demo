@@ -76,7 +76,23 @@ async function handleResponse<T>(res: Response): Promise<T> {
     const message = await res.text();
     throw new Error(message || "Request failed");
   }
-  return res.json() as Promise<T>;
+
+  // Some endpoints (e.g. DELETE) return 204 with no body; avoid JSON parse errors.
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await res.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // Fall back to returning raw text when response is not JSON.
+    return text as unknown as T;
+  }
 }
 
 async function authFetch(
