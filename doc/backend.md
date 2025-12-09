@@ -90,7 +90,7 @@ All endpoints are nested under `/api`. Highlights:
 ## Docker & Deployment
 
 - `backend/Dockerfile` installs dependencies, copies `app/`, seeds `.env`, creates storage folders, and runs `uvicorn app.main:app --host 0.0.0.0 --port 8000`.
-- In `docker-compose.yml`, the backend service is built from that Dockerfile, mounts `backend_storage:/app/storage`, and sets `DATABASE_URL` to the Postgres container while still allowing overrides for external Chroma.
+- In `docker-compose.yml`, the backend service is built from that Dockerfile, mounts `backend_storage:/usr/src/backend/storage`, and sets `DATABASE_URL` to the Postgres container while still allowing overrides for external Chroma.
 
 ## Testing
 
