@@ -1,7 +1,7 @@
 <video controls src="https://github.com/khali70/AI_Rag_demo/raw/refs/heads/master/doc/nexAI.mp4" title="demo"></video>
 
 
-## Production stack
+## [Production stack](https://github.com/khali70/AI_Rag_demo/raw/refs/heads/master/doc/nexAI.mp4)
 
 The repository ships with a Docker-based deployment that runs Postgres, the FastAPI backend, and the Next.js frontend. A helper script wraps the `docker compose` commands so you can bring the stack up consistently.
 
