@@ -1,4 +1,5 @@
-<iframe width="100%" height="400" src="https://www.youtube.com/embed/ztyhQXbaqFE" title="Demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<video controls src="https://github.com/khali70/AI_Rag_demo/raw/refs/heads/master/doc/nexAI.mp4" title="demo"></video>
+
 
 ## Production stack
 
